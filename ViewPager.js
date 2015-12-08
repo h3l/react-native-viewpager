@@ -57,6 +57,7 @@ var ViewPager = React.createClass({
   },
 
   componentWillMount() {
+    this.myGoToPage(this.props.initialPageNum);
     var release = (e, gestureState) => {
       var relativeGestureDistance = gestureState.dx / deviceWidth,
           //lastPageIndex = this.props.children.length - 1,
@@ -129,6 +130,45 @@ var ViewPager = React.createClass({
         5000
       );
     }
+  },
+
+  myGoToPage(pageNumber) {
+    var pageCount = this.props.dataSource.getPageCount();
+    if (pageNumber < 0 || pageNumber >= pageCount) {
+      console.error('Invalid page number: ', pageNumber);
+      return
+    }
+
+    var step = pageNumber - this.state.currentPage;
+
+    var pageCount = this.props.dataSource.getPageCount();
+    var pageNumber = this.state.currentPage + step;
+
+    if (this.props.isLoop) {
+      pageNumber = (pageNumber + pageCount) % pageCount;
+    } else {
+      pageNumber = Math.min(Math.max(0, pageNumber), pageCount - 1);
+    }
+
+    var moved = pageNumber !== this.state.currentPage;
+    var scrollStep = (moved ? step : 0) + this.state.childIndex;
+
+    moved && this.props.onChangePage && this.props.onChangePage(pageNumber);
+
+    this.state.fling = true;
+
+    var nextChildIdx = 0;
+    if (pageNumber > 0 || this.props.isLoop) {
+      nextChildIdx = 1;
+    }
+
+    this.state.fling = false;
+    this.state.childIndex = nextChildIdx;
+    this.state.scrollValue.setValue(nextChildIdx);
+    this.setState({
+      currentPage: pageNumber,
+    });
+
   },
 
   goToPage(pageNumber) {
@@ -209,6 +249,7 @@ var ViewPager = React.createClass({
   },
 
   render() {
+    console.log(this.state);
     var dataSource = this.props.dataSource;
     var pageIDs = dataSource.pageIdentities;
 
@@ -257,7 +298,7 @@ var ViewPager = React.createClass({
     });
 
     return (
-      <View style={{flex: 1}}
+      <View style={{flex: 1, backgroundColor: "black"}}
         onLayout={(event) => {
             // console.log('ViewPager.onLayout()');
             var viewWidth = event.nativeEvent.layout.width;
